@@ -8,11 +8,21 @@ const resolvers = {
     Query: {
         me: async (parent, args, context) => {
             if (context.user) {
-              data = await User.findOne({ _id: context.user._id }).select('-__v -password');
+              data = await User.findOne({ _id: context.user._id })
+              .select('-__v -password')
+              .populate('book');
               return data;
             }
             throw new AuthenticationError('You need to be logged in!');
         },
+        users: async () => {
+          return User.find().select('-__v -password').populate('book');
+        },
+        user: async (parent, { username }) => {
+          return User.findOne({ username })
+            .select('-__v -password')
+            .populate('book');
+        }
     },
 
     Mutation: {
@@ -39,6 +49,8 @@ const resolvers = {
           return { token, user };
         },
         saveBook: async (parent, { newBook }, context) => {
+          console.log(context.user);
+          console.log(newBook);
           if (context.user) {
             const updatedUser = await User.findByIdAndUpdate(
               { _id: context.user._id },
@@ -50,6 +62,7 @@ const resolvers = {
           throw new AuthenticationError('You need to be logged in!');
         },
         removeBook: async (parent, { bookId }, context) => {
+          console.log(args);
           if (context.user) {
             const updatedUser = await User.findByIdAndUpdate(
               { _id: context.user._id },
